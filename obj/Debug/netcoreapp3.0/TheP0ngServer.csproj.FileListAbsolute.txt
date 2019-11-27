@@ -1,0 +1,11 @@
+/Users/german_nikolishin/Projects/TheP0ngServer/bin/Debug/netcoreapp3.0/TheP0ngServer
+/Users/german_nikolishin/Projects/TheP0ngServer/bin/Debug/netcoreapp3.0/TheP0ngServer.deps.json
+/Users/german_nikolishin/Projects/TheP0ngServer/bin/Debug/netcoreapp3.0/TheP0ngServer.runtimeconfig.json
+/Users/german_nikolishin/Projects/TheP0ngServer/bin/Debug/netcoreapp3.0/TheP0ngServer.runtimeconfig.dev.json
+/Users/german_nikolishin/Projects/TheP0ngServer/bin/Debug/netcoreapp3.0/TheP0ngServer.dll
+/Users/german_nikolishin/Projects/TheP0ngServer/bin/Debug/netcoreapp3.0/TheP0ngServer.pdb
+/Users/german_nikolishin/Projects/TheP0ngServer/obj/Debug/netcoreapp3.0/TheP0ngServer.csprojAssemblyReference.cache
+/Users/german_nikolishin/Projects/TheP0ngServer/obj/Debug/netcoreapp3.0/TheP0ngServer.AssemblyInfoInputs.cache
+/Users/german_nikolishin/Projects/TheP0ngServer/obj/Debug/netcoreapp3.0/TheP0ngServer.AssemblyInfo.cs
+/Users/german_nikolishin/Projects/TheP0ngServer/obj/Debug/netcoreapp3.0/TheP0ngServer.dll
+/Users/german_nikolishin/Projects/TheP0ngServer/obj/Debug/netcoreapp3.0/TheP0ngServer.pdb
