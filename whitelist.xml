@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <config>
     <items>
-        <port>1516</port>
+        <port>3322</port>
     </items>
 </config>
