@@ -2,52 +2,66 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Xml;
-using System.IO;
+using System.Threading;
 
 namespace TheP0ngServer
 {
     class Program
     {
-        public const int PORT = 4455;
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-            int port = ParsePort("whitelist.xml");
-            StartServer(port);
+            Console.WriteLine("Hello World");
+            _ = new ParseXML("whitelist.xml");
+            StartServer(ParseXML.Port);
         }
 
-        static void StartServer(int port)
+        private static void StartServer(int port)
         {
-            UdpClient udp = new UdpClient(port);
-            IPEndPoint groupIP = new IPEndPoint(IPAddress.Any, port);
-            Console.WriteLine("Waiting for broadcast on port " + port.ToString());
-
+            Socket tcpListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Any, port);
             try
             {
+                tcpListener.Bind(tcpEndPoint);
                 while (true)
                 {
-                    byte[] bytes = udp.Receive(ref groupIP);
-                    Console.WriteLine($"Received broadcast from {groupIP} :");
-                    Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                    //Handle each client on a new thread;
+                    tcpListener.Listen(1000);
+                    Socket clientSocket = tcpListener.Accept();
+                    Thread clientThread;
+                    clientThread = new Thread((() => ClientConnection(clientSocket, ParseXML.IP, port)));
+                    clientThread.Start();
                 }
-
             }
-            catch (SocketException e)
+            catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
-            }
-            finally
-            {
-                udp.Close();
+                Console.WriteLine(e);
             }
         }
+        private static void ClientConnection(Socket clientSocket, string ipWebAPI, int port)
+        {
+            //Receive data;
+            byte[] receivedBytes = new byte[5];
+            clientSocket.Receive(receivedBytes);
+            //Format data + log data;
+            string receivedData = Encoding.ASCII.GetString(receivedBytes);
+            byte[] formattedData = formatJSON(receivedData);
+            Console.WriteLine(receivedData);
+            //Send to WEBAPI and wait for response as a client;
+            Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(ipWebAPI), port);
+            senderSocket.Bind(endPoint);
+            senderSocket.Send(formattedData);
+            byte[] handShakeByte = new byte[1];
+            senderSocket.Receive(handShakeByte);
+            //Send response to client;
+            clientSocket.Send(handShakeByte);
+        }
 
-
-        static int ParsePort(string path) {
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.Load("whitelist.xml");
-            return Int32.Parse(xmlDocument.DocumentElement.ChildNodes[0].ChildNodes[0].ChildNodes[0].InnerText);
+        private static byte[] formatJSON(string data)
+        {
+            //Add JSON formating here but is any needed if we are just sending a school code?
+            return Encoding.ASCII.GetBytes(data);
         }
     }
 }
