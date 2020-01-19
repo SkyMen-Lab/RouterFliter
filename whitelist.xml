@@ -2,6 +2,6 @@
 <config>
   <items>
     <port>3322</port>
-    <IPAddress>localhost</IPAddress>
+    <IPaddress>127.0.0.1</IPaddress>
   </items>
 </config>
