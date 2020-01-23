@@ -14,42 +14,42 @@ namespace TheP0ngServer
         public void StartTcpServer(int port, string WebAPIip, string SchoolCode)
         {
             Socket tcpListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Any, port);
-
-            //Socket for sending to web api
             Socket senderSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Parse(WebAPIip), port);
-            senderSocket.Bind(endPoint);
-
-            Console.WriteLine("TCP listening");
-
+            LoggerService logger = new LoggerService();
+            //Socket for sending to web api
             try
             {
+                IPEndPoint tcpEndPoint = new IPEndPoint(IPAddress.Any, port);
+                IPEndPoint webEndPoint = new IPEndPoint(IPAddress.Parse(WebAPIip), port);
+                senderSocket.Bind(webEndPoint);
                 tcpListener.Bind(tcpEndPoint);
+            }
+            catch(Exception e)
+            {
+                logger.LogError($"Connection failed to bind sockets, or invalid Endpoints: {e}");
+            }
+            logger.LogInformation("Started TCP listening");
+            try
+            {
+               
                 while (true)
                 {
                     //Handle each client on a new thread;
                     tcpListener.Listen(100);
                     Socket clientSocket = tcpListener.Accept();
-                  
-                    Thread clientThread = new Thread(() => ClientConnection(clientSocket, senderSocket, SchoolCode));
+                    Thread clientThread = new Thread(() => ClientConnection(clientSocket, senderSocket, SchoolCode, logger));
                     clientThread.Start();
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                logger.LogError($"Threads failed or can't accept client: {e}");
             }
         }
-
-        public bool CheckNetworkMask(string ConfigIP)
-        {
-            return true;
-        }
-        public void ClientConnection(Socket clientSocket, Socket senderSocket, string SchoolCode)
+        public void ClientConnection(Socket clientSocket, Socket senderSocket, string SchoolCode, LoggerService logger)
         {
             byte[] formattedData = new byte[64];
-            byte[] handShakeByte = new byte[1];
+            byte[] handShakeByte = new byte[3];
             //Receive ReceivedGameCode;
             byte[] receivedBytes = new byte[64];
             clientSocket.Receive(receivedBytes);
@@ -57,35 +57,35 @@ namespace TheP0ngServer
             //Format ReceivedGameCode + log ReceivedGameCode;
             string receivedData = Encoding.ASCII.GetString(receivedBytes);
             JsonConfigs Receivedconfigs = JsonConvert.DeserializeObject<JsonConfigs>(receivedData);
+
             if (Receivedconfigs.SchoolCode == SchoolCode)
             {
-                if (CheckNetworkMask(Receivedconfigs.ConfigIp))
-                {
-                    formattedData = FormatJSON(Receivedconfigs.SchoolCode, SchoolCode);
-                    Console.WriteLine(receivedData);
-                    //Send to WEBAPI and wait for response as a client;
-                    senderSocket.Send(formattedData);
-                    senderSocket.Receive(handShakeByte);
-                }
-                else
-                {
-                    handShakeByte[0] = 0;
-                }
+                formattedData = FormatJSON(Receivedconfigs.SchoolCode, Receivedconfigs.GameCode, logger);
+                Console.WriteLine(receivedData);
+                logger.LogInformation($"Received Data: {receivedData}");
+                //Send to WEBAPI and wait for response as a client;
+                senderSocket.Send(formattedData);
+                senderSocket.Receive(handShakeByte);
             }
             else
             {
-                handShakeByte[0] = 0;
+                string error = "404";
+                handShakeByte = Encoding.ASCII.GetBytes(error);
             }
             //Send response to client;
             clientSocket.Send(handShakeByte);
         }
 
-        public byte[] FormatJSON(string ReceivedGameCode, string SchoolCode)
+        public byte[] FormatJSON(string ReceivedGameCode, string ReceivedSchoolCode, LoggerService logger)
         {
             byte[] jsonBytes = new byte[64];
-            string JsonFormat = "{ \"SchoolCode\": \"" + ReceivedGameCode + "\",\"GameSessionCode\": \"" + SchoolCode + "\"}";
-            var JsonString = JsonConvert.SerializeObject(JsonFormat);
-            Console.WriteLine(JsonString);
+            var ConfigstoSend = new JsonConfigs()
+            {
+                GameCode = ReceivedGameCode,
+                SchoolCode = ReceivedSchoolCode
+            };
+            var JsonString = JsonConvert.SerializeObject(ConfigstoSend);
+            logger.LogInformation($"Formatted Json: {JsonString}");
             return Encoding.ASCII.GetBytes(JsonString);
         }
     }

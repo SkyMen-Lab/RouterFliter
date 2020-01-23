@@ -2,35 +2,51 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
+using Microsoft.VisualBasic.CompilerServices;
+using Serilog.Core;
 
 namespace TheP0ngServer
 {
     public class UdpListener
     {
+      
+        UdpClient receivingUdpClient;
+        private int Port;
+        private LoggerService Logger;
+        private Socket udpClientSocket;
+
         public void StartUdpListening(int port, string ipWebAPI)
         {
-            UdpClient listenerClient = new UdpClient(port);
+            LoggerService logger = new LoggerService();
+            Port = port;
+            Logger = logger;
+
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
+            receivingUdpClient = new UdpClient(endPoint);
 
-            Console.WriteLine("UDP listening");
-
-            Socket udpClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            udpClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             IPEndPoint webApIpEndPoint = new IPEndPoint(IPAddress.Parse(ipWebAPI), port);
-
             udpClientSocket.Bind(webApIpEndPoint);
-            try
+            logger.LogInformation("Started UDP listening");
+
+            while (true)
             {
-                while (true)
+                try
                 {
-                    byte[] bytes = listenerClient.Receive(ref endPoint);
-                    udpClientSocket.Send(bytes);
+                    byte[] received = new byte[1];
+                    received = receivingUdpClient.Receive(ref endPoint);
+                    Logger.LogInformation($"Received UDP packet: {received[0]}");
+                    //Add collecting the data here and sending larger packets;
+                    udpClientSocket.Send(received);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError($"UDP connection error: {e}");
                 }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-            }
+            
         }
     }
 }

@@ -10,7 +10,7 @@ namespace TheP0ngServer
         [JsonProperty("SchoolCode")]
         public string SchoolCode { get; set; }
 
-        [JsonProperty("ConfigIP")]
-        public string ConfigIp { get; set; }
+        [JsonProperty("GameCode")]
+        public string GameCode { get; set; }
     }
 }

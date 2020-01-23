@@ -10,26 +10,29 @@ using Serilog;
 
 namespace TheP0ngServer
 {
-    class Program
+    public class Program
     {
+        private static LoggerService _logger;
+
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World");
-
             Configs config = new Configs();
+
             config.ParseXML("whitelist.xml");
+            config.GetAPIip("localhost");
+
             int port = config.Port;
             string SchoolCode = config.SchoolCode;
-            IPAddress[] APIDomaina = Dns.GetHostAddresses("localhost");
-            string[] IPs = APIDomaina.Select(ip => ip.ToString()).ToArray();
-            string APIDomain = IPs[1];
-            Console.WriteLine(APIDomain);
+            string APIDomain = config.Apidomain;
+
+            _logger = new LoggerService(); 
+            _logger.LogInformation($"Started Server on Port: {port}, Connecting to: {APIDomain}, where SchoolCode: {SchoolCode}");
 
             UdpListener udpListener = new UdpListener();
             TCPListener tcpListener = new TCPListener();
 
 
-            //Starts TCP on a new thread and leaves udp on the main thread and tcp branches have new threads for handling new clients;
+            //Starts TCP on a new thread and a new thread for UDP and tcp branches have new threads for handling new clients;
             try
             {
                 Thread udpThread = new Thread(() => udpListener.StartUdpListening(port, APIDomain));
@@ -37,7 +40,7 @@ namespace TheP0ngServer
             }
             catch (Exception exception)
             {
-                Console.WriteLine(exception);
+                _logger.LogError($"Error with udpThread: {exception}");
             }
             try
             {
@@ -46,7 +49,13 @@ namespace TheP0ngServer
             }
             catch (Exception exception)
             {
-                Console.WriteLine(exception);
+                _logger.LogError($"Error with tcpThread: {exception}");
+            }
+
+            finally
+            {
+                _logger.CloseLogger();
+
             }
         }
 
