@@ -12,24 +12,20 @@ namespace TheP0ngServer
 {
     public class Program
     {
-        private static LoggerService _logger;
-
         static void Main(string[] args)
         {
             Configs config = new Configs();
 
             config.ParseXML("whitelist.xml");
-            config.GetAPIip("localhost");
-
             int port = config.Port;
             string SchoolCode = config.SchoolCode;
-            string APIDomain = config.Apidomain;
+            string APIDomain = ("https://my-json-server.typicode.com/nnugget/TravelRecord/db");
 
-            _logger = new LoggerService(); 
+            LoggerService _logger = new LoggerService(); 
             _logger.LogInformation($"Started Server on Port: {port}, Connecting to: {APIDomain}, where SchoolCode: {SchoolCode}");
 
             UdpListener udpListener = new UdpListener();
-            TCPListener tcpListener = new TCPListener();
+            tcpListen tcpListener = new tcpListen();
 
 
             //Starts TCP on a new thread and a new thread for UDP and tcp branches have new threads for handling new clients;
@@ -55,7 +51,6 @@ namespace TheP0ngServer
             finally
             {
                 _logger.CloseLogger();
-
             }
         }
 

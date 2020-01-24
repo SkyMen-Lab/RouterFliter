@@ -11,7 +11,6 @@ namespace TheP0ngServer
     {
         public int Port { get; private set; }
         public string SchoolCode { get; private set; }
-        public string Apidomain { get; private set; }
 
         public void ParseXML(string path)
         {
@@ -21,11 +20,5 @@ namespace TheP0ngServer
             SchoolCode = doc.DocumentElement.ChildNodes[0].ChildNodes[1].ChildNodes[0].InnerText;
         }
 
-        public void GetAPIip(string HostName)
-        {
-            IPAddress[] APIDomaina = Dns.GetHostAddresses(HostName);
-            string[] IPs = APIDomaina.Select(ip => ip.ToString()).ToArray();
-            Apidomain = IPs[1];
-        }
     }
 }
