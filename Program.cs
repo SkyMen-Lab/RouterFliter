@@ -25,7 +25,7 @@ namespace TheP0ngServer
             _logger.LogInformation($"Started Server on Port: {port}, Connecting to: {APIDomain}, where SchoolCode: {SchoolCode}");
 
             UdpListener udpListener = new UdpListener();
-            tcpListen tcpListener = new tcpListen();
+            TcpManager tcpListener = new TcpManager();
 
 
             //Starts TCP on a new thread and a new thread for UDP and tcp branches have new threads for handling new clients;

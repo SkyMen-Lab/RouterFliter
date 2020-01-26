@@ -15,7 +15,7 @@ using Serilog.Core;
 
 namespace TheP0ngServer
 {
-    public class tcpListen
+    public class TcpManager
     {
         static HttpClient _client = new HttpClient();
         private static string _schoolCode;
@@ -81,13 +81,19 @@ namespace TheP0ngServer
             if (User.SchoolCode == _schoolCode)
             {
                 logger.LogInformation($"Attempting to register client: {User.SchoolCode} {User.GameCode}");
-                StringContent httpContent = new StringContent(User.ToString());
+               
+                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
+                
                 int response = await RegisterPlayer(httpContent);
+                
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
+
                 if(response == 200)
                     logger.LogInformation("New client registered");
+                else if (response == 1)
+                    logger.LogError("Http Request failed");
                 else
-                    logger.LogInformation($"Client failed to register: {response}");
+                    logger.LogError($"Client failed to register: {response}");
             }
             else
             {
@@ -99,9 +105,17 @@ namespace TheP0ngServer
         }
         static async Task<int> RegisterPlayer(StringContent user)
         {
-            HttpResponseMessage response = await _client.PostAsync(_apiDomain, user);
-            logger.LogInformation($"WebAPI response: {response.StatusCode}");
-            return (int)response.StatusCode;
+            try
+            {
+                HttpResponseMessage response = await _client.PostAsync(_apiDomain, user);
+                logger.LogInformation($"WebAPI response: {response.StatusCode}");
+                return (int) response.StatusCode;
+            }
+            catch
+            {
+                return 1;
+            }
+            
         }
     }
 }
