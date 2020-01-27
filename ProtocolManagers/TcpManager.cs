@@ -21,19 +21,23 @@ namespace TheP0ngServer
         private static string _schoolCode;
         private static string _apiDomain;
         private static LoggerService logger;
+        private int _tcpPort;
+
 
         public void StartTcpServer(int port, string APIDomain, string SchoolCode)
         {
             logger = new LoggerService();
             //Port +1 to leave this port open for UDP listening;
-            port++;
+            _tcpPort = port + 1;
+
+
             _schoolCode = SchoolCode;
             _apiDomain = APIDomain;
-            _client.BaseAddress = new Uri($"http://localhost:{port}/");
+            _client.BaseAddress = new Uri($"http://localhost:{_tcpPort}/");
             _client.DefaultRequestHeaders.Accept.Clear();
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            TcpListener listener = new TcpListener(IPAddress.Any, port);
+            TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
             TcpClient client;
             listener.Start(1000);
             logger.LogInformation("Started TCP Listening");

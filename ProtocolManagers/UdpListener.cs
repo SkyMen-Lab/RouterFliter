@@ -15,16 +15,17 @@ namespace TheP0ngServer
     public class UdpListener
     {
         private static LoggerService logger;
+        private int _tcpPort, _udpPort;
         public void StartUdpListening(int port, string APIdomain)
         {
             logger = new LoggerService();
+            _tcpPort = port + 1;
+            _udpPort = port;
 
-            UdpClient Listener = new UdpClient(port);
-            IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, port);
+            UdpClient Listener = new UdpClient(_udpPort);
+            IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
 
-            port++;
-
-            TcpClient client = new TcpClient(APIdomain, port);
+            TcpClient client = new TcpClient(APIdomain, _tcpPort);
             NetworkStream ns = client.GetStream();
 
             logger.LogInformation("Started UDP Listening");
