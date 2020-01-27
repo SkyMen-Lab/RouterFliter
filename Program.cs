@@ -1,53 +1,58 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
-using System.Xml;
-using System.IO;
+using System.Threading;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace TheP0ngServer
 {
-    class Program
+    public class Program
     {
-        public const int PORT = 4455;
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
-            int port = ParsePort("whitelist.xml");
-            StartServer(port);
-        }
+            Configs config = new Configs();
 
-        static void StartServer(int port)
-        {
-            UdpClient udp = new UdpClient(port);
-            IPEndPoint groupIP = new IPEndPoint(IPAddress.Any, port);
-            Console.WriteLine("Waiting for broadcast on port " + port.ToString());
+            config.ParseXML("whitelist.xml");
+            int port = config.Port;
+            string SchoolCode = config.SchoolCode;
+            string APIDomain = ("https://my-json-server.typicode.com/nnugget/TravelRecord/db");
 
+            LoggerService _logger = new LoggerService(); 
+            _logger.LogInformation($"Started Server on Port: {port}, Connecting to: {APIDomain}, where SchoolCode: {SchoolCode}");
+
+            UdpListener udpListener = new UdpListener();
+            TcpManager tcpListener = new TcpManager();
+
+
+            //Starts TCP on a new thread and a new thread for UDP and tcp branches have new threads for handling new clients;
             try
             {
-                while (true)
-                {
-                    byte[] bytes = udp.Receive(ref groupIP);
-                    Console.WriteLine($"Received broadcast from {groupIP} :");
-                    Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
-                }
-
+                Thread udpThread = new Thread(() => udpListener.StartUdpListening(port, APIDomain));
+                udpThread.Start();
             }
-            catch (SocketException e)
+            catch (Exception exception)
             {
-                Console.WriteLine(e.ToString());
+                _logger.LogError($"Error with udpThread: {exception}");
             }
+            try
+            {
+                Thread tcpThread = new Thread(() => tcpListener.StartTcpServer(port, APIDomain, SchoolCode));
+                tcpThread.Start();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError($"Error with tcpThread: {exception}");
+            }
+
             finally
             {
-                udp.Close();
+                _logger.CloseLogger();
             }
         }
 
-
-        static int ParsePort(string path) {
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.Load("whitelist.xml");
-            return Int32.Parse(xmlDocument.DocumentElement.ChildNodes[0].ChildNodes[0].ChildNodes[0].InnerText);
-        }
     }
 }
