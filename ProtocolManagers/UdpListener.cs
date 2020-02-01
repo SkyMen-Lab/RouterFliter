@@ -15,22 +15,29 @@ namespace TheP0ngServer
     public class UdpListener
     {
         private static LoggerService logger;
-        private int _tcpPort, _udpPort;
-        public void StartUdpListening(int port, string APIdomain)
+        private int _udpPort;
+        private NetworkStream ns;
+
+        public void StartUdpListening(int port, string APIdomain, int GameServicePort)
         {
+
             logger = new LoggerService();
-            _tcpPort = port + 1;
             _udpPort = port;
 
             UdpClient Listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
 
-            TcpClient client = new TcpClient(APIdomain, _tcpPort);
-            NetworkStream ns = client.GetStream();
-
-            logger.LogInformation("Started UDP Listening");
-            logger.LogInformation("Connected TCP with webAPI");
-
+            try
+            {
+                TcpClient client = new TcpClient(APIdomain, GameServicePort);
+                ns = client.GetStream();
+                logger.LogInformation("Started UDP Listening");
+                logger.LogInformation("Connected TCP with webAPI");
+            }
+            catch(Exception e)
+            {
+                logger.LogError($"Exception: {e}");
+            }
             try
             {
                 while (true)

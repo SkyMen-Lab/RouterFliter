@@ -20,6 +20,7 @@ namespace TheP0ngServer
         static HttpClient _client = new HttpClient();
         private static string _schoolCode;
         private static string _apiDomain;
+
         private static LoggerService logger;
         private int _tcpPort;
 
@@ -30,17 +31,21 @@ namespace TheP0ngServer
             //Port +1 to leave this port open for UDP listening;
             _tcpPort = port + 1;
 
-
             _schoolCode = SchoolCode;
             _apiDomain = APIDomain;
-            _client.BaseAddress = new Uri($"http://localhost:{_tcpPort}/");
-            _client.DefaultRequestHeaders.Accept.Clear();
-            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
+            try{
+                _client.BaseAddress = new Uri(_apiDomain);
+                _client.DefaultRequestHeaders.Accept.Clear();
+                _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                logger.LogInformation("Started TCP Listening");
+            }
+            catch(Exception e){
+                logger.LogError($"Unable to connect as a client to webAPI {e}");
+            }
             TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
             TcpClient client;
             listener.Start(1000);
-            logger.LogInformation("Started TCP Listening");
             try
             {
                 while (true)
@@ -67,7 +72,6 @@ namespace TheP0ngServer
             }
            
         }
-
         private static async void HandleClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
