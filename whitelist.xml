@@ -3,5 +3,7 @@
   <items>
     <port>3322</port>
     <SchoolCode>Z0A4Y</SchoolCode>
+    <GameServicePort>1234</GameServicePort>
+    <GameServiceIP>localhost</GameServiceIP>
   </items>
 </config>
