@@ -38,16 +38,16 @@ namespace TheP0ngServer
                 _client.BaseAddress = new Uri(_apiDomain);
                 _client.DefaultRequestHeaders.Accept.Clear();
                 _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                logger.LogInformation("Started TCP Listening");
             }
             catch(Exception e){
                 logger.LogError($"Unable to connect as a client to webAPI {e}");
             }
             TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
             TcpClient client;
-            listener.Start(1000);
             try
             {
+                listener.Start(1000);
+                logger.LogInformation("Started TCP Listening");
                 while (true)
                 {
                     client = listener.AcceptTcpClient();
@@ -121,6 +121,7 @@ namespace TheP0ngServer
             }
             catch
             {
+                logger.LogError($"Fail to register user {user}");
                 return 1;
             }
             
