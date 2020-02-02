@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -16,7 +17,7 @@ namespace TheP0ngServer
     {
         private static LoggerService logger;
         private int _udpPort;
-        private NetworkStream ns;
+
 
         public void StartUdpListening(int port, string APIdomain, int GameServicePort)
         {
@@ -29,11 +30,7 @@ namespace TheP0ngServer
 
             try
             {
-                TcpClient client = new TcpClient();
-                client.Connect(APIdomain, GameServicePort);
-                ns = client.GetStream();
                 logger.LogInformation("Started UDP Listening");
-                logger.LogInformation("Connected TCP with webAPI");
             }
             catch(Exception e)
             {
@@ -41,14 +38,21 @@ namespace TheP0ngServer
             }
             try
             {
+                TcpClient client = new TcpClient();
+                client.Connect("127.0.0.1", GameServicePort);
+                StreamWriter stream = new StreamWriter(client.GetStream());
+                stream.AutoFlush = true;
+                logger.LogInformation("Connected TCP with webAPI");
                 while (true)
                 {
                     byte[] bytes = Listener.Receive(ref groupEndPoint);
                     logger.LogInformation($"Received {bytes[0]}");
                     int movement = Convert.ToInt32(bytes[0]);
                     var finalMsg = movement + " " + Configs.SchoolCode;
-                    bytes = Encoding.ASCII.GetBytes(finalMsg);
-                    ns.Write(bytes);
+                    if (!string.IsNullOrEmpty(finalMsg)) {
+                        //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
+                        stream.Write(finalMsg);
+                    }
                 }
             }
             catch (SocketException e)
@@ -66,8 +70,28 @@ namespace TheP0ngServer
             finally
             {
                 Listener.Close();
-                ns.Close();
             }
+        }
+
+        private void SendMessageToWebAPI(string message, string ip, int port) {
+            //MAYBE used in future
+            try
+            {
+                TcpClient client = new TcpClient();
+                client.Connect(ip, port);
+                logger.LogInformation("Connected TCP with webAPI");
+                var stream = client.GetStream();
+                byte[] bytes = Encoding.ASCII.GetBytes(message);
+                stream.Write(bytes, 0, bytes.Length);
+
+                stream.Close();
+                client.Close();
+            }
+            catch (SocketException e)
+            {
+                logger.LogError($"SocketException: {e}"); 
+            }
+
         }
     }
 }
