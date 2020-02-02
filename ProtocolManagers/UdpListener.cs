@@ -29,7 +29,8 @@ namespace TheP0ngServer
 
             try
             {
-                TcpClient client = new TcpClient(APIdomain, GameServicePort);
+                TcpClient client = new TcpClient();
+                client.Connect(APIdomain, GameServicePort);
                 ns = client.GetStream();
                 logger.LogInformation("Started UDP Listening");
                 logger.LogInformation("Connected TCP with webAPI");
@@ -44,6 +45,9 @@ namespace TheP0ngServer
                 {
                     byte[] bytes = Listener.Receive(ref groupEndPoint);
                     logger.LogInformation($"Received {bytes[0]}");
+                    int movement = Convert.ToInt32(bytes[0]);
+                    var finalMsg = movement + " " + Configs.SchoolCode;
+                    bytes = Encoding.ASCII.GetBytes(finalMsg);
                     ns.Write(bytes);
                 }
             }

@@ -14,14 +14,11 @@ namespace TheP0ngServer
 	{
 		static void Main(string[] args)
 		{
-			Configs config = new Configs();
-
-			config.ParseXML("whitelist.xml");
 			
-			int port = config.Port;
-			int GameServicePort = config.GameServicePort;
-			string SchoolCode = config.SchoolCode;
-			string APIDomain = config.GameServiceIP;
+			int port = Configs.Port;
+			int GameServicePort = Configs.GameServicePort;
+			string SchoolCode = Configs.SchoolCode;
+			string APIDomain = Configs.GameServiceIP;
 			
 
 			LoggerService _logger = new LoggerService(); 

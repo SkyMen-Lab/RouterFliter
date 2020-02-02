@@ -17,7 +17,7 @@ namespace TheP0ngServer
 {
     public class TcpManager
     {
-        static HttpClient _client = new HttpClient();
+        static HttpClient _client;
         private static string _schoolCode;
         private static string _apiDomain;
 
@@ -35,7 +35,10 @@ namespace TheP0ngServer
             _apiDomain = APIDomain;
 
             try{
-                _client.BaseAddress = new Uri(_apiDomain);
+                HttpClientHandler clientHandler = new HttpClientHandler();
+                clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+                _client = new HttpClient(clientHandler);
+                _client.BaseAddress = new Uri("https://127.0.0.1:5001");
                 _client.DefaultRequestHeaders.Accept.Clear();
                 _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
@@ -115,7 +118,7 @@ namespace TheP0ngServer
         {
             try
             {
-                HttpResponseMessage response = await _client.PostAsync(_apiDomain, user);
+                HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_joined", user);
                 logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int) response.StatusCode;
             }

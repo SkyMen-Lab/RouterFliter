@@ -7,16 +7,20 @@ using System.Xml;
 
 namespace TheP0ngServer
 {
-    public class Configs
+    public static class Configs
     {
-        public int Port { get; private set; }
-        public string SchoolCode { get; private set; }
+        public static int Port { get; private set; }
+        public static string SchoolCode { get; private set; }
 
-        public int GameServicePort { get; private set; }
-        public string GameServiceIP { get; private set; }
+        public static int GameServicePort { get; private set; }
+        public static string GameServiceIP { get; private set; }
 
 
-        public void ParseXML(string path)
+        static Configs() {
+            ParseXML("config.xml");
+        }
+
+        private static void ParseXML(string path)
         {
             XmlDocument doc = new XmlDocument();
             doc.Load(path);

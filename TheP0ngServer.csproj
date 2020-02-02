@@ -7,11 +7,11 @@
 
   <ItemGroup>
     <None Remove="log.txt" />
-    <None Remove="whitelist.xml" />
+    <None Remove="config.xml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="whitelist.xml">
+    <Content Include="config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
