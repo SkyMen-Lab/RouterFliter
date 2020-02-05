@@ -24,14 +24,11 @@ namespace TheP0ngServer
 			LoggerService _logger = new LoggerService(); 
 			_logger.LogInformation($"Started Server on Port: {port}, Connecting to: {APIDomain}, where SchoolCode: {SchoolCode}");
 
-			UdpListener udpListener = new UdpListener();
-			TcpManager tcpListener = new TcpManager();
-
 
 			//Starts TCP on a new thread and a new thread for UDP and tcp branches have new threads for handling new clients;
 			try
 			{
-				Thread udpThread = new Thread(() => udpListener.StartUdpListening(port, APIDomain, GameServicePort));
+				Thread udpThread = new Thread(() => UdpListener.StartUdpListening(port, APIDomain, GameServicePort));
 				udpThread.Start();
 			}
 			catch (Exception exception)
@@ -40,7 +37,7 @@ namespace TheP0ngServer
 			}
 			try
 			{
-				Thread tcpThread = new Thread(() => tcpListener.StartTcpServer(port, APIDomain, SchoolCode));
+				Thread tcpThread = new Thread(() => TcpManager.StartTcpServer(port, APIDomain, SchoolCode));
 				tcpThread.Start();
 			}
 			catch (Exception exception)

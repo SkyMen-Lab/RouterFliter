@@ -16,10 +16,12 @@ namespace TheP0ngServer
     public class UdpListener
     {
         private static LoggerService logger;
-        private int _udpPort;
+        private static int _udpPort;
+        private static System.Timers.Timer _timer;
 
 
-        public void StartUdpListening(int port, string APIdomain, int GameServicePort)
+
+        public static void StartUdpListening(int port, string APIdomain, int GameServicePort)
         {
 
             logger = new LoggerService();
@@ -27,15 +29,7 @@ namespace TheP0ngServer
 
             UdpClient Listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
-
-            try
-            {
-                logger.LogInformation("Started UDP Listening");
-            }
-            catch(Exception e)
-            {
-                logger.LogError($"Exception: {e}");
-            }
+            logger.LogInformation("Started UDP Listening");
             try
             {
                 TcpClient client = new TcpClient();
@@ -55,14 +49,6 @@ namespace TheP0ngServer
                     }
                 }
             }
-            catch (SocketException e)
-            {
-                logger.LogError($"Socket Exception: {e}");
-            }
-            catch (ArgumentNullException e)
-            {
-                logger.LogError($"Null Exception: {e}");
-            }
             catch(Exception e)
             {
                 logger.LogError($"Exception: {e}");
@@ -70,7 +56,18 @@ namespace TheP0ngServer
             finally
             {
                 Listener.Close();
+                Restart(port, APIdomain, GameServicePort);
             }
+        }
+        private static void Restart(int port, string APIdomain, int GameServicePort){
+            logger.LogInformation("Restarting UdpListening and connection with GameService");
+            SetTimer(10000);
+            StartUdpListening(port, APIdomain, GameServicePort);
+        }
+        private static void SetTimer(int time){
+            _timer = new System.Timers.Timer(time);
+            _timer.AutoReset = true;
+            _timer.Enabled = true;
         }
 
         private void SendMessageToWebAPI(string message, string ip, int port) {

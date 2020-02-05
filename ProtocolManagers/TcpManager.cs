@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic.CompilerServices;
+using System.Timers;
 using Serilog;
 using Serilog.Core;
 
@@ -22,10 +23,11 @@ namespace TheP0ngServer
         private static string _apiDomain;
 
         private static LoggerService logger;
-        private int _tcpPort;
+        private static int _tcpPort;
+        private static System.Timers.Timer _timer;
 
 
-        public void StartTcpServer(int port, string APIDomain, string SchoolCode)
+        public static void StartTcpServer(int port, string APIDomain, string SchoolCode)
         {
             logger = new LoggerService();
             //Port +1 to leave this port open for UDP listening;
@@ -44,6 +46,7 @@ namespace TheP0ngServer
             }
             catch(Exception e){
                 logger.LogError($"Unable to connect as a client to webAPI {e}");
+                Restart(port, APIDomain, SchoolCode);
             }
             TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
             TcpClient client;
@@ -72,8 +75,25 @@ namespace TheP0ngServer
             finally
             {
                 listener.Stop();
+                Restart(port, APIDomain, SchoolCode);
             }
-           
+        }
+        private static void Restart(int port, string APIDomain, string SchoolCode){
+            logger.LogInformation("TcpListener is offline");
+                //Sets 10000 millisecond timer
+                setTimer(10000);
+                //calls the StartTcpServer again
+                restartTcpListening(port, APIDomain, SchoolCode);
+        }
+        private static void setTimer(int time){
+            logger.LogInformation($"Attempting to restart server in 10 seconds.");
+            _timer = new System.Timers.Timer(time);
+            _timer.AutoReset = true;
+            _timer.Enabled = true;
+        }
+        private static void restartTcpListening(int port, string APIDomain, string SchoolCode){
+            logger.LogInformation("Restarting Listening");
+            StartTcpServer(port, APIDomain, SchoolCode);
         }
         private static async void HandleClient(TcpClient client)
         {
@@ -114,7 +134,7 @@ namespace TheP0ngServer
             }
             stream.Close();
         }
-        static async Task<int> RegisterPlayer(StringContent user)
+        private static async Task<int> RegisterPlayer(StringContent user)
         {
             try
             {
