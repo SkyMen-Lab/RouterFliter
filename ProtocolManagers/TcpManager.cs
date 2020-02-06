@@ -24,6 +24,8 @@ namespace TheP0ngServer
 
         private static LoggerService logger;
         private static int _tcpPort;
+        private static int _port;
+
         private static System.Timers.Timer _timer;
 
 
@@ -31,8 +33,8 @@ namespace TheP0ngServer
         {
             logger = new LoggerService();
             //Port +1 to leave this port open for UDP listening;
+            _port = port;
             _tcpPort = port + 1;
-
             _schoolCode = SchoolCode;
             _apiDomain = APIDomain;
 
@@ -46,7 +48,7 @@ namespace TheP0ngServer
             }
             catch(Exception e){
                 logger.LogError($"Unable to connect as a client to webAPI {e}");
-                Restart(port, APIDomain, SchoolCode);
+                Restart();
             }
             TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
             TcpClient client;
@@ -75,26 +77,24 @@ namespace TheP0ngServer
             finally
             {
                 listener.Stop();
-                Restart(port, APIDomain, SchoolCode);
+                Restart();
             }
         }
-        private static void Restart(int port, string APIDomain, string SchoolCode){
-            logger.LogInformation("TcpListener is offline");
-                //Sets 10000 millisecond timer
-                setTimer(10000);
-                //calls the StartTcpServer again
-                restartTcpListening(port, APIDomain, SchoolCode);
-        }
-        private static void setTimer(int time){
-            logger.LogInformation($"Attempting to restart server in 10 seconds.");
-            _timer = new System.Timers.Timer(time);
-            _timer.AutoReset = true;
+        private static void Restart()
+        {
+            _timer = new System.Timers.Timer();
+            logger.LogInformation("Restarting server in 5 seconds");
+            _timer.Interval = 5000;
+            _timer.Elapsed += OnTimedEvent;
+            _timer.AutoReset = false;
             _timer.Enabled = true;
         }
-        private static void restartTcpListening(int port, string APIDomain, string SchoolCode){
-            logger.LogInformation("Restarting Listening");
-            StartTcpServer(port, APIDomain, SchoolCode);
+        private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            StartTcpServer(_port, _apiDomain, _schoolCode);
         }
+       
+       
         private static async void HandleClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
