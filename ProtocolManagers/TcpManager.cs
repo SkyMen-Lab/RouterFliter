@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualBasic.CompilerServices;
+using System.Timers;
 using Serilog;
 using Serilog.Core;
 
@@ -22,15 +23,18 @@ namespace TheP0ngServer
         private static string _apiDomain;
 
         private static LoggerService logger;
-        private int _tcpPort;
+        private static int _tcpPort;
+        private static int _port;
+
+        private static System.Timers.Timer _timer;
 
 
-        public void StartTcpServer(int port, string APIDomain, string SchoolCode)
+        public static void StartTcpServer(int port, string APIDomain, string SchoolCode)
         {
             logger = new LoggerService();
             //Port +1 to leave this port open for UDP listening;
+            _port = port;
             _tcpPort = port + 1;
-
             _schoolCode = SchoolCode;
             _apiDomain = APIDomain;
 
@@ -44,6 +48,7 @@ namespace TheP0ngServer
             }
             catch(Exception e){
                 logger.LogError($"Unable to connect as a client to webAPI {e}");
+                Restart();
             }
             TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
             TcpClient client;
@@ -72,9 +77,24 @@ namespace TheP0ngServer
             finally
             {
                 listener.Stop();
+                Restart();
             }
-           
         }
+        private static void Restart()
+        {
+            _timer = new System.Timers.Timer();
+            logger.LogInformation("Restarting server in 5 seconds");
+            _timer.Interval = 5000;
+            _timer.Elapsed += OnTimedEvent;
+            _timer.AutoReset = false;
+            _timer.Enabled = true;
+        }
+        private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+            StartTcpServer(_port, _apiDomain, _schoolCode);
+        }
+       
+       
         private static async void HandleClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
@@ -114,7 +134,7 @@ namespace TheP0ngServer
             }
             stream.Close();
         }
-        static async Task<int> RegisterPlayer(StringContent user)
+        private static async Task<int> RegisterPlayer(StringContent user)
         {
             try
             {
