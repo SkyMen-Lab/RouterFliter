@@ -22,7 +22,7 @@ namespace TheP0ngServer
         private static string _apiDomain;
         private static int _gameServicePort;
 
-        public static void StartUdpListening(int port, string APIdomain, int GameServicePort)
+        public static async void StartUdpListening(int port, string APIdomain, int GameServicePort)
         {
 
 
@@ -39,7 +39,6 @@ namespace TheP0ngServer
                 TcpClient client = new TcpClient();
                 client.Connect("127.0.0.1", GameServicePort);
                 StreamWriter stream = new StreamWriter(client.GetStream());
-                stream.AutoFlush = true;
                 logger.LogInformation("Connected TCP with webAPI");
                 while (true)
                 {
@@ -49,7 +48,8 @@ namespace TheP0ngServer
                     var finalMsg = movement + " " + Configs.SchoolCode;
                     if (!string.IsNullOrEmpty(finalMsg)) {
                         //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
-                        stream.Write(finalMsg);
+                        await stream.WriteAsync(finalMsg);
+                        await stream.FlushAsync();
                     }
                 }
             }
