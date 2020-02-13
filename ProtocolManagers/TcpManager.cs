@@ -109,7 +109,7 @@ namespace TheP0ngServer
             {
                 logger.LogError($"Failed to convert user data into Json: {e}");
             }
-            if (User.SchoolCode == _schoolCode)
+            if (User.SchoolCode == _schoolCode && User.UserJoined)
             {
                 logger.LogInformation($"Attempting to register client: {User.SchoolCode} {User.GameCode}");
                
@@ -124,7 +124,22 @@ namespace TheP0ngServer
                 else if (response == 1)
                     logger.LogError("Http Request failed");
                 else
-                    logger.LogError($"Client failed to register: {response}");
+                    logger.LogError($"Client failed to register. Error Code: {response}");
+            }
+            else if(User.SchoolCode == _schoolCode && !User.UserJoined)
+            {
+                logger.LogInformation($"Client attempting to leave the game: {User.SchoolCode} {User.GameCode}");
+
+                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
+
+                int response = await UserLeaving(httpContent);
+
+                if (response == 200)
+                    logger.LogInformation("User has left");
+                else if (response == 1)
+                    logger.LogError("Http Request failed");
+                else
+                    logger.LogError($"Client failed to leave. Error Code: {response}");
             }
             else
             {
@@ -133,6 +148,21 @@ namespace TheP0ngServer
                 logger.LogInformation($"Client has invalid SchoolCode: {User.SchoolCode}");
             }
             stream.Close();
+        }
+        private static async Task<int> UserLeaving(StringContent user)
+        {
+            try
+            {
+                HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_left ", user);
+                logger.LogInformation($"WebAPI response: {response.StatusCode}");
+                return (int)response.StatusCode;
+            }
+            catch
+            {
+                logger.LogError($"Fail to register user {user}");
+                return 1;
+            }
+
         }
         private static async Task<int> RegisterPlayer(StringContent user)
         {
