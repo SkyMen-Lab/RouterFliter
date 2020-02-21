@@ -33,7 +33,7 @@ namespace TheP0ngServer
 
             UdpClient Listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
-            logger.LogInformation("Started UDP Listening");
+            logger.LogInformation($"Started UDP Listening on {_udpPort}");
             try
             {
                 TcpClient client = new TcpClient();
