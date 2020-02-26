@@ -6,8 +6,10 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.CompilerServices;
+using RouterFilter.Models;
 using Serilog.Core;
 using Serilog.Data;
 
@@ -40,17 +42,15 @@ namespace TheP0ngServer
                 client.Connect("127.0.0.1", GameServicePort);
                 StreamWriter stream = new StreamWriter(client.GetStream());
                 logger.LogInformation("Connected TCP with webAPI");
+                await SendPacket(new Packet(Meta.Connect, "router"), stream);
                 while (true)
                 {
                     byte[] bytes = Listener.Receive(ref groupEndPoint);
                     logger.LogInformation($"Received {bytes[0]}");
                     int movement = Convert.ToInt32(bytes[0]);
                     var finalMsg = movement + " " + Configs.SchoolCode;
-                    if (!string.IsNullOrEmpty(finalMsg)) {
-                        //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
-                        await stream.WriteAsync(finalMsg);
-                        await stream.FlushAsync();
-                    }
+                    //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
+                    await SendPacket(new Packet(Meta.Message, finalMsg), stream);
                 }
             }
             catch(Exception e)
@@ -62,6 +62,13 @@ namespace TheP0ngServer
                 Listener.Close();
                 Restart();
             }
+        }
+
+
+        public static async Task SendPacket(Packet packet, StreamWriter stream) 
+        {
+            await stream.WriteAsync(packet.ToJson());
+            await stream.FlushAsync();
         }
         private static void Restart()
         {
