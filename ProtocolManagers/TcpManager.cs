@@ -40,7 +40,7 @@ namespace TheP0ngServer
 
             try{
                 HttpClientHandler clientHandler = new HttpClientHandler();
-                clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+                clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
                 _client = new HttpClient(clientHandler);
                 _client.BaseAddress = new Uri("https://127.0.0.1:5001");
                 _client.DefaultRequestHeaders.Accept.Clear();
@@ -55,7 +55,7 @@ namespace TheP0ngServer
             try
             {
                 listener.Start(1000);
-                logger.LogInformation("Started TCP Listening");
+                logger.LogInformation($"Started TCP Listening on port {_tcpPort}");
                 while (true)
                 {
                     client = listener.AcceptTcpClient();
@@ -101,15 +101,21 @@ namespace TheP0ngServer
             byte[] ReceivedBytes = new byte[64];
             stream.Read(ReceivedBytes);
             JsonConfigs User = new JsonConfigs();
+            bool isJoining = false;
             try
             {
-                User = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(ReceivedBytes));
+                string UserD = Encoding.ASCII.GetString(ReceivedBytes);
+                string Joining = UserD.Substring(0, 1);
+                string data = UserD.Substring(1, UserD.Length - 1);
+                if (Joining == "0")
+                    isJoining = true;
+                User = JsonConvert.DeserializeObject<JsonConfigs>(data);
             }
             catch(Exception e)
             {
                 logger.LogError($"Failed to convert user data into Json: {e}");
             }
-            if (User.SchoolCode == _schoolCode && User.UserJoined)
+            if (User.SchoolCode == _schoolCode && isJoining)
             {
                 logger.LogInformation($"Attempting to register client: {User.SchoolCode} {User.GameCode}");
                
@@ -126,7 +132,7 @@ namespace TheP0ngServer
                 else
                     logger.LogError($"Client failed to register. Error Code: {response}");
             }
-            else if(User.SchoolCode == _schoolCode && !User.UserJoined)
+            else if(User.SchoolCode == _schoolCode && !isJoining)
             {
                 logger.LogInformation($"Client attempting to leave the game: {User.SchoolCode} {User.GameCode}");
 
