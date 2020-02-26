@@ -13,5 +13,8 @@ namespace TheP0ngServer
         [JsonProperty("GameCode")]
         public string GameCode { get; set; }
 
+        [JsonProperty("IsJoining")]
+        public bool IsJoining { get; set; }
+
     }
 }

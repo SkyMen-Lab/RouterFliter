@@ -83,7 +83,7 @@ namespace TheP0ngServer
         private static void Restart()
         {
             _timer = new System.Timers.Timer();
-            logger.LogInformation("Restarting server in 5 seconds");
+            logger.LogInformation("Restarting TCP server in 5 seconds");
             _timer.Interval = 5000;
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = false;
@@ -101,21 +101,15 @@ namespace TheP0ngServer
             byte[] ReceivedBytes = new byte[64];
             stream.Read(ReceivedBytes);
             JsonConfigs User = new JsonConfigs();
-            bool isJoining = false;
             try
             {
-                string UserD = Encoding.ASCII.GetString(ReceivedBytes);
-                string Joining = UserD.Substring(0, 1);
-                string data = UserD.Substring(1, UserD.Length - 1);
-                if (Joining == "0")
-                    isJoining = true;
-                User = JsonConvert.DeserializeObject<JsonConfigs>(data);
+                 User = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(ReceivedBytes));  
             }
             catch(Exception e)
             {
                 logger.LogError($"Failed to convert user data into Json: {e}");
             }
-            if (User.SchoolCode == _schoolCode && isJoining)
+            if (User.SchoolCode == _schoolCode && User.IsJoining)
             {
                 logger.LogInformation($"Attempting to register client: {User.SchoolCode} {User.GameCode}");
                
@@ -132,7 +126,7 @@ namespace TheP0ngServer
                 else
                     logger.LogError($"Client failed to register. Error Code: {response}");
             }
-            else if(User.SchoolCode == _schoolCode && !isJoining)
+            else if(User.SchoolCode == _schoolCode && !User.IsJoining)
             {
                 logger.LogInformation($"Client attempting to leave the game: {User.SchoolCode} {User.GameCode}");
 

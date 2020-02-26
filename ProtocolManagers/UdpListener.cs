@@ -73,7 +73,7 @@ namespace TheP0ngServer
         private static void Restart()
         {
             _timer = new System.Timers.Timer();
-            logger.LogInformation("Restarting server in 5 seconds");
+            logger.LogInformation("Restarting UDP server in 5 seconds");
             _timer.Interval = 5000;
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = false;
