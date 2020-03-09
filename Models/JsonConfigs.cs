@@ -7,8 +7,8 @@ namespace TheP0ngServer
 {
     public class JsonConfigs
     {
-        [JsonProperty("SchoolCode")]
-        public string SchoolCode { get; set; }
+        [JsonProperty("TeamCode")]
+        public string TeamCode { get; set; }
 
         [JsonProperty("GameCode")]
         public string GameCode { get; set; }

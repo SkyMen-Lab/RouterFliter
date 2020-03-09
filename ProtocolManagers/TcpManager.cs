@@ -109,9 +109,9 @@ namespace TheP0ngServer
             {
                 logger.LogError($"Failed to convert user data into Json: {e}");
             }
-            if (User.SchoolCode == _schoolCode && User.IsJoining)
+            if (User.TeamCode == _schoolCode && User.IsJoining)
             {
-                logger.LogInformation($"Attempting to register client: {User.SchoolCode} {User.GameCode}");
+                logger.LogInformation($"Attempting to register client: {User.TeamCode} {User.GameCode}");
                
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
                 
@@ -126,9 +126,9 @@ namespace TheP0ngServer
                 else
                     logger.LogError($"Client failed to register. Error Code: {response}");
             }
-            else if(User.SchoolCode == _schoolCode && !User.IsJoining)
+            else if(User.TeamCode == _schoolCode && !User.IsJoining)
             {
-                logger.LogInformation($"Client attempting to leave the game: {User.SchoolCode} {User.GameCode}");
+                logger.LogInformation($"Client attempting to leave the game: {User.TeamCode} {User.GameCode}");
 
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
 
@@ -145,7 +145,7 @@ namespace TheP0ngServer
             {
                 int response = 100;
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
-                logger.LogInformation($"Client has invalid SchoolCode: {User.SchoolCode}");
+                logger.LogInformation($"Client has invalid SchoolCode: {User.TeamCode}");
             }
             stream.Close();
         }
