@@ -133,6 +133,7 @@ namespace TheP0ngServer
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
 
                 int response = await UserLeaving(httpContent);
+                stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
 
                 if (response == 200)
                     logger.LogInformation("User has left");
