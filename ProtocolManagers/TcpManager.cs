@@ -40,7 +40,7 @@ namespace TheP0ngServer
 
             try{
                 HttpClientHandler clientHandler = new HttpClientHandler();
-                clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+                clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
                 _client = new HttpClient(clientHandler);
                 _client.BaseAddress = new Uri("https://127.0.0.1:5001");
                 _client.DefaultRequestHeaders.Accept.Clear();
@@ -55,7 +55,7 @@ namespace TheP0ngServer
             try
             {
                 listener.Start(1000);
-                logger.LogInformation("Started TCP Listening");
+                logger.LogInformation($"Started TCP Listening on port {_tcpPort}");
                 while (true)
                 {
                     client = listener.AcceptTcpClient();
@@ -83,7 +83,7 @@ namespace TheP0ngServer
         private static void Restart()
         {
             _timer = new System.Timers.Timer();
-            logger.LogInformation("Restarting server in 5 seconds");
+            logger.LogInformation("Restarting TCP server in 5 seconds");
             _timer.Interval = 5000;
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = false;
@@ -103,15 +103,15 @@ namespace TheP0ngServer
             JsonConfigs User = new JsonConfigs();
             try
             {
-                User = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(ReceivedBytes));
+                 User = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(ReceivedBytes));  
             }
             catch(Exception e)
             {
                 logger.LogError($"Failed to convert user data into Json: {e}");
             }
-            if (User.SchoolCode == _schoolCode)
+            if (User.TeamCode == _schoolCode && User.IsJoining)
             {
-                logger.LogInformation($"Attempting to register client: {User.SchoolCode} {User.GameCode}");
+                logger.LogInformation($"Attempting to register client: {User.TeamCode} {User.GameCode}");
                
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
                 
@@ -124,15 +124,46 @@ namespace TheP0ngServer
                 else if (response == 1)
                     logger.LogError("Http Request failed");
                 else
-                    logger.LogError($"Client failed to register: {response}");
+                    logger.LogError($"Client failed to register. Error Code: {response}");
+            }
+            else if(User.TeamCode == _schoolCode && !User.IsJoining)
+            {
+                logger.LogInformation($"Client attempting to leave the game: {User.TeamCode} {User.GameCode}");
+
+                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
+
+                int response = await UserLeaving(httpContent);
+                stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
+
+                if (response == 200)
+                    logger.LogInformation("User has left");
+                else if (response == 1)
+                    logger.LogError("Http Request failed");
+                else
+                    logger.LogError($"Client failed to leave. Error Code: {response}");
             }
             else
             {
                 int response = 100;
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
-                logger.LogInformation($"Client has invalid SchoolCode: {User.SchoolCode}");
+                logger.LogInformation($"Client has invalid SchoolCode: {User.TeamCode}");
             }
             stream.Close();
+        }
+        private static async Task<int> UserLeaving(StringContent user)
+        {
+            try
+            {
+                HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_left ", user);
+                logger.LogInformation($"WebAPI response: {response.StatusCode}");
+                return (int)response.StatusCode;
+            }
+            catch
+            {
+                logger.LogError($"Fail to register user {user}");
+                return 1;
+            }
+
         }
         private static async Task<int> RegisterPlayer(StringContent user)
         {
