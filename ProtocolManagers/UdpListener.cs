@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.CompilerServices;
+using System.Timers;
 using RouterFilter.Models;
 using Serilog.Core;
 using Serilog.Data;
@@ -19,19 +20,20 @@ namespace TheP0ngServer
     {
         private static LoggerService logger;
         private static int _udpPort;
-        private static System.Timers.Timer _timer;
+        private static Timer _restartTimer;
+        private static Timer _countingTimer;
 
         private static string _apiDomain;
         private static int _gameServicePort;
+        private static int _countedClicks;
 
         public static async void StartUdpListening(int port, string APIdomain, int GameServicePort)
         {
-
-
             logger = new LoggerService();
             _udpPort = port;
             _apiDomain = APIdomain;
             _gameServicePort = GameServicePort;
+            _countedClicks = 0;
 
             UdpClient Listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
@@ -43,14 +45,15 @@ namespace TheP0ngServer
                 StreamWriter stream = new StreamWriter(client.GetStream());
                 logger.LogInformation("Connected TCP with webAPI");
                 await SendPacket(new Packet(Meta.Connect, "router"), stream);
+                StartTimer();
                 while (true)
                 {
                     byte[] bytes = Listener.Receive(ref groupEndPoint);
-                    logger.LogInformation($"Received {bytes[0]}");
                     int movement = Convert.ToInt32(bytes[0]);
                     var finalMsg = movement + " " + Configs.SchoolCode;
                     //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
                     await SendPacket(new Packet(Meta.Message, finalMsg), stream);
+                    _countedClicks++;
                 }
             }
             catch(Exception e)
@@ -64,46 +67,37 @@ namespace TheP0ngServer
             }
         }
 
-
         public static async Task SendPacket(Packet packet, StreamWriter stream) 
         {
             await stream.WriteAsync(packet.ToJson());
             await stream.FlushAsync();
         }
+        private static void StartTimer()
+        {
+            _countingTimer = new Timer(5000);
+            _countingTimer.Elapsed += OnCountedEvent;
+            _countingTimer.AutoReset = true;
+            _countingTimer.Enabled = true;
+        }
+        
         private static void Restart()
         {
-            _timer = new System.Timers.Timer();
+            _countingTimer.Stop();
+            _restartTimer = new Timer();
             logger.LogInformation("Restarting UDP server in 5 seconds");
-            _timer.Interval = 5000;
-            _timer.Elapsed += OnTimedEvent;
-            _timer.AutoReset = false;
-            _timer.Enabled = true;
+            _restartTimer.Interval = 5000;
+            _restartTimer.Elapsed += OnTimedEvent;
+            _restartTimer.AutoReset = false;
+            _restartTimer.Enabled = true;
         }
-        private static void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        private static void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
             StartUdpListening(_udpPort, _apiDomain, _gameServicePort);
         }
-       
-
-        private void SendMessageToWebAPI(string message, string ip, int port) {
-            //MAYBE used in future
-            try
-            {
-                TcpClient client = new TcpClient();
-                client.Connect(ip, port);
-                logger.LogInformation("Connected TCP with webAPI");
-                var stream = client.GetStream();
-                byte[] bytes = Encoding.ASCII.GetBytes(message);
-                stream.Write(bytes, 0, bytes.Length);
-
-                stream.Close();
-                client.Close();
-            }
-            catch (SocketException e)
-            {
-                logger.LogError($"SocketException: {e}"); 
-            }
-
+        private static void OnCountedEvent(Object source, ElapsedEventArgs e)
+        {
+            logger.LogInformation($"Received {_countedClicks} in the last 5 seconds");
+            _countedClicks = 0;
         }
     }
 }
