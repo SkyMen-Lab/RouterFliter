@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace RouterFilter.Models
+namespace TheP0ngServer.Models
 {
     public class Packet
     {

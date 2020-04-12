@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic.CompilerServices;
-using RouterFilter.Models;
-using Serilog.Core;
-using Serilog.Data;
+using TheP0ngServer.Models;
 
-namespace TheP0ngServer
+namespace TheP0ngServer.ProtocolManagers
 {
     public class UdpListener
     {
@@ -33,7 +26,7 @@ namespace TheP0ngServer
             _apiDomain = APIdomain;
             _gameServicePort = GameServicePort;
 
-            UdpClient Listener = new UdpClient(_udpPort);
+            UdpClient listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
             logger.LogInformation($"Started UDP Listening on {_udpPort}");
             try
@@ -45,7 +38,7 @@ namespace TheP0ngServer
                 await SendPacket(new Packet(Meta.Connect, "router"), stream);
                 while (true)
                 {
-                    byte[] bytes = Listener.Receive(ref groupEndPoint);
+                    byte[] bytes = listener.Receive(ref groupEndPoint);
                     logger.LogInformation($"Received {bytes[0]}");
                     int movement = Convert.ToInt32(bytes[0]);
                     var finalMsg = movement + " " + Configs.SchoolCode;
@@ -59,7 +52,7 @@ namespace TheP0ngServer
             }
             finally
             {
-                Listener.Close();
+                listener.Close();
                 Restart();
             }
         }

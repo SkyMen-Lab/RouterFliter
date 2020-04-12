@@ -1,20 +1,14 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic.CompilerServices;
-using System.Timers;
-using Serilog;
-using Serilog.Core;
+using Newtonsoft.Json;
+using TheP0ngServer.Models;
 
-namespace TheP0ngServer
+namespace TheP0ngServer.ProtocolManagers
 {
     public class TcpManager
     {
@@ -22,7 +16,7 @@ namespace TheP0ngServer
         private static string _schoolCode;
         private static string _apiDomain;
 
-        private static LoggerService logger;
+        private static LoggerService _logger;
         private static int _tcpPort;
         private static int _port;
 
@@ -31,7 +25,7 @@ namespace TheP0ngServer
 
         public static void StartTcpServer(int port, string APIDomain, string SchoolCode)
         {
-            logger = new LoggerService();
+            _logger = new LoggerService();
             //Port +1 to leave this port open for UDP listening;
             _port = port;
             _tcpPort = port + 1;
@@ -47,7 +41,7 @@ namespace TheP0ngServer
                 _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
             catch(Exception e){
-                logger.LogError($"Unable to connect as a client to webAPI {e}");
+                _logger.LogError($"Unable to connect as a client to webAPI {e}");
                 Restart();
             }
             TcpListener listener = new TcpListener(IPAddress.Any, _tcpPort);
@@ -55,7 +49,7 @@ namespace TheP0ngServer
             try
             {
                 listener.Start(1000);
-                logger.LogInformation($"Started TCP Listening on port {_tcpPort}");
+                _logger.LogInformation($"Started TCP Listening on port {_tcpPort}");
                 while (true)
                 {
                     client = listener.AcceptTcpClient();
@@ -64,15 +58,15 @@ namespace TheP0ngServer
             }
             catch (SocketException e)
             {
-                logger.LogError($"Socket Exception: {e}");
+                _logger.LogError($"Socket Exception: {e}");
             }
             catch (ArgumentNullException e)
             {
-                logger.LogError($"Null Exception: {e}");
+                _logger.LogError($"Null Exception: {e}");
             }
             catch (Exception e)
             {
-                logger.LogError($"Exception: {e}");
+                _logger.LogError($"Exception: {e}");
             }
             finally
             {
@@ -83,7 +77,7 @@ namespace TheP0ngServer
         private static void Restart()
         {
             _timer = new System.Timers.Timer();
-            logger.LogInformation("Restarting TCP server in 5 seconds");
+            _logger.LogInformation("Restarting TCP server in 5 seconds");
             _timer.Interval = 5000;
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = false;
@@ -107,11 +101,11 @@ namespace TheP0ngServer
             }
             catch(Exception e)
             {
-                logger.LogError($"Failed to convert user data into Json: {e}");
+                _logger.LogError($"Failed to convert user data into Json: {e}");
             }
             if (User.TeamCode == _schoolCode && User.IsJoining)
             {
-                logger.LogInformation($"Attempting to register client: {User.TeamCode} {User.GameCode}");
+                _logger.LogInformation($"Attempting to register client: {User.TeamCode} {User.GameCode}");
                
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
                 
@@ -120,15 +114,15 @@ namespace TheP0ngServer
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
 
                 if(response == 200)
-                    logger.LogInformation("New client registered");
+                    _logger.LogInformation("New client registered");
                 else if (response == 1)
-                    logger.LogError("Http Request failed");
+                    _logger.LogError("Http Request failed");
                 else
-                    logger.LogError($"Client failed to register. Error Code: {response}");
+                    _logger.LogError($"Client failed to register. Error Code: {response}");
             }
             else if(User.TeamCode == _schoolCode && !User.IsJoining)
             {
-                logger.LogInformation($"Client attempting to leave the game: {User.TeamCode} {User.GameCode}");
+                _logger.LogInformation($"Client attempting to leave the game: {User.TeamCode} {User.GameCode}");
 
                 StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
 
@@ -136,17 +130,17 @@ namespace TheP0ngServer
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
 
                 if (response == 200)
-                    logger.LogInformation("User has left");
+                    _logger.LogInformation("User has left");
                 else if (response == 1)
-                    logger.LogError("Http Request failed");
+                    _logger.LogError("Http Request failed");
                 else
-                    logger.LogError($"Client failed to leave. Error Code: {response}");
+                    _logger.LogError($"Client failed to leave. Error Code: {response}");
             }
             else
             {
                 int response = 100;
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
-                logger.LogInformation($"Client has invalid SchoolCode: {User.TeamCode}");
+                _logger.LogInformation($"Client has invalid SchoolCode: {User.TeamCode}");
             }
             stream.Close();
         }
@@ -155,12 +149,12 @@ namespace TheP0ngServer
             try
             {
                 HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_left ", user);
-                logger.LogInformation($"WebAPI response: {response.StatusCode}");
+                _logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int)response.StatusCode;
             }
             catch
             {
-                logger.LogError($"Fail to register user {user}");
+                _logger.LogError($"Fail to register user {user}");
                 return 1;
             }
 
@@ -170,12 +164,12 @@ namespace TheP0ngServer
             try
             {
                 HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_joined", user);
-                logger.LogInformation($"WebAPI response: {response.StatusCode}");
+                _logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int) response.StatusCode;
             }
             catch
             {
-                logger.LogError($"Fail to register user {user}");
+                _logger.LogError($"Fail to register user {user}");
                 return 1;
             }
             
