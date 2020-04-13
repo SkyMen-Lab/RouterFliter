@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Serilog;
 using TheP0ngServer.Models;
 
 namespace TheP0ngServer.ProtocolManagers
@@ -92,22 +93,22 @@ namespace TheP0ngServer.ProtocolManagers
         private static async void HandleClient(TcpClient client)
         {
             NetworkStream stream = client.GetStream();
-            byte[] ReceivedBytes = new byte[64];
-            stream.Read(ReceivedBytes);
-            JsonConfigs User = new JsonConfigs();
+            byte[] receivedBytes = new byte[64];
+            stream.Read(receivedBytes);
+            JsonConfigs user = new JsonConfigs();
             try
             {
-                 User = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(ReceivedBytes));  
+                 user = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(receivedBytes));  
             }
             catch(Exception e)
             {
                 _logger.LogError($"Failed to convert user data into Json: {e}");
             }
-            if (User.TeamCode == _schoolCode && User.IsJoining)
+            if (user.TeamCode == _schoolCode && user.IsJoining)
             {
-                _logger.LogInformation($"Attempting to register client: {User.TeamCode} {User.GameCode}");
+                _logger.LogInformation($"Attempting to register client: {user.TeamCode} {user.GameCode}");
                
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
+                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(user), Encoding.UTF8, "application/json");
                 
                 int response = await RegisterPlayer(httpContent);
                 
@@ -120,27 +121,33 @@ namespace TheP0ngServer.ProtocolManagers
                 else
                     _logger.LogError($"Client failed to register. Error Code: {response}");
             }
-            else if(User.TeamCode == _schoolCode && !User.IsJoining)
+            else if(user.TeamCode == _schoolCode && !user.IsJoining)
             {
-                _logger.LogInformation($"Client attempting to leave the game: {User.TeamCode} {User.GameCode}");
+                _logger.LogInformation($"Client attempting to leave the game: {user.TeamCode} {user.GameCode}");
 
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(User), Encoding.UTF8, "application/json");
+                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(user), Encoding.UTF8, "application/json");
 
                 int response = await UserLeaving(httpContent);
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
 
-                if (response == 200)
-                    _logger.LogInformation("User has left");
-                else if (response == 1)
-                    _logger.LogError("Http Request failed");
-                else
-                    _logger.LogError($"Client failed to leave. Error Code: {response}");
+                switch (response)
+                {
+                    case 200:
+                        _logger.LogInformation("User has left");
+                        break;
+                    case 1:
+                        _logger.LogError("Http Request failed");
+                        break;
+                    default:
+                        _logger.LogError($"Client failed to leave. Error Code: {response}");
+                        break;
+                }
             }
             else
             {
                 int response = 100;
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));
-                _logger.LogInformation($"Client has invalid SchoolCode: {User.TeamCode}");
+                _logger.LogInformation($"Client has invalid SchoolCode: {user.TeamCode}");
             }
             stream.Close();
         }
