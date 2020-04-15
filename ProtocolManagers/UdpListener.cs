@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using TheP0ngServer.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.CompilerServices;
 using System.Timers;
@@ -14,7 +12,7 @@ using RouterFilter.Models;
 using Serilog.Core;
 using Serilog.Data;
 
-namespace TheP0ngServer
+namespace TheP0ngServer.ProtocolManagers
 {
     public class UdpListener
     {
@@ -35,20 +33,21 @@ namespace TheP0ngServer
             _gameServicePort = GameServicePort;
             _countedClicks = 0;
 
-            UdpClient Listener = new UdpClient(_udpPort);
+            UdpClient listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
             logger.LogInformation($"Started UDP Listening on {_udpPort}");
             try
             {
                 TcpClient client = new TcpClient();
-                client.Connect("127.0.0.1", GameServicePort);
+                client.Connect(_apiDomain, GameServicePort);
                 StreamWriter stream = new StreamWriter(client.GetStream());
                 logger.LogInformation("Connected TCP with webAPI");
                 await SendPacket(new Packet(Meta.Connect, "router"), stream);
                 StartTimer();
                 while (true)
                 {
-                    byte[] bytes = Listener.Receive(ref groupEndPoint);
+                    byte[] bytes = listener.Receive(ref groupEndPoint);
+                    logger.LogInformation($"Received {bytes[0]}");
                     int movement = Convert.ToInt32(bytes[0]);
                     var finalMsg = movement + " " + Configs.SchoolCode;
                     //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
@@ -62,7 +61,7 @@ namespace TheP0ngServer
             }
             finally
             {
-                Listener.Close();
+                listener.Close();
                 Restart();
             }
         }
