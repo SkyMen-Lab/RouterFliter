@@ -37,7 +37,7 @@ namespace TheP0ngServer.ProtocolManagers
                 HttpClientHandler clientHandler = new HttpClientHandler();
                 clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
                 _client = new HttpClient(clientHandler);
-                _client.BaseAddress = new Uri("https://127.0.0.1:5001");
+                _client.BaseAddress = new Uri($"http://{_apiDomain}");
                 _client.DefaultRequestHeaders.Accept.Clear();
                 _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             }
@@ -155,7 +155,7 @@ namespace TheP0ngServer.ProtocolManagers
         {
             try
             {
-                HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_left ", user);
+                HttpResponseMessage response = await _client.PostAsync($"http://{_apiDomain}v1a/user_left", user);
                 _logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int)response.StatusCode;
             }
@@ -170,7 +170,7 @@ namespace TheP0ngServer.ProtocolManagers
         {
             try
             {
-                HttpResponseMessage response = await _client.PostAsync("http://127.0.0.1:5000/v1a/user_joined", user);
+                HttpResponseMessage response = await _client.PostAsync($"http://{_apiDomain}v1a/user_left", user);
                 _logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int) response.StatusCode;
             }

@@ -32,7 +32,7 @@ namespace TheP0ngServer.ProtocolManagers
             try
             {
                 TcpClient client = new TcpClient();
-                client.Connect("127.0.0.1", GameServicePort);
+                client.Connect(_apiDomain, GameServicePort);
                 StreamWriter stream = new StreamWriter(client.GetStream());
                 logger.LogInformation("Connected TCP with webAPI");
                 await SendPacket(new Packet(Meta.Connect, "router"), stream);
