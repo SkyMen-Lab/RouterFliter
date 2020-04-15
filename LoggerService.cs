@@ -18,7 +18,7 @@ namespace TheP0ngServer
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .WriteTo.Console()
-                .WriteTo.File(@"logs\log.txt", LogEventLevel.Information, rollingInterval: RollingInterval.Day, rollOnFileSizeLimit: true)
+                .WriteTo.File("logs/log.txt", LogEventLevel.Information, rollingInterval: RollingInterval.Day, rollOnFileSizeLimit: true)
                 .CreateLogger();
         }
         public void LogInformation(string message)

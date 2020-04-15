@@ -2,15 +2,9 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 using TheP0ngServer.Models;
-using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic.CompilerServices;
 using System.Timers;
-using RouterFilter.Models;
-using Serilog.Core;
-using Serilog.Data;
 
 namespace TheP0ngServer.ProtocolManagers
 {
@@ -19,7 +13,7 @@ namespace TheP0ngServer.ProtocolManagers
         private static LoggerService logger;
         private static int _udpPort;
         private static Timer _restartTimer;
-        private static Timer _countingTimer;
+        private static Timer _countingTimer = new Timer(5000);
 
         private static string _apiDomain;
         private static int _gameServicePort;
@@ -73,7 +67,6 @@ namespace TheP0ngServer.ProtocolManagers
         }
         private static void StartTimer()
         {
-            _countingTimer = new Timer(5000);
             _countingTimer.Elapsed += OnCountedEvent;
             _countingTimer.AutoReset = true;
             _countingTimer.Enabled = true;
