@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Xml;
+﻿using System.Xml;
 
-namespace TheP0ngServer
+namespace TheP0ngServer.Models
 {
     public static class Configs
     {
