@@ -155,7 +155,7 @@ namespace TheP0ngServer.ProtocolManagers
         {
             try
             {
-                HttpResponseMessage response = await _client.PostAsync($"http://{_apiDomain}/game/v1a/user_left", user);
+                HttpResponseMessage response = await _client.PostAsync($"http://{_apiDomain}/v1a/user_left", user);
                 _logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int)response.StatusCode;
             }
@@ -170,7 +170,7 @@ namespace TheP0ngServer.ProtocolManagers
         {
             try
             {
-                HttpResponseMessage response = await _client.PostAsync($"http://{_apiDomain}/game/v1a/user_joined", user);
+                HttpResponseMessage response = await _client.PostAsync($"http://{_apiDomain}/v1a/user_joined", user);
                 _logger.LogInformation($"WebAPI response: {response.StatusCode}");
                 return (int) response.StatusCode;
             }
