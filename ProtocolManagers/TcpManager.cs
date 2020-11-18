@@ -4,9 +4,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Serilog;
 using TheP0ngServer.Models;
 
 namespace TheP0ngServer.ProtocolManagers
@@ -98,7 +97,7 @@ namespace TheP0ngServer.ProtocolManagers
             JsonConfigs user = new JsonConfigs();
             try
             {
-                 user = JsonConvert.DeserializeObject<JsonConfigs>(Encoding.ASCII.GetString(receivedBytes));  
+                 user = JsonSerializer.Deserialize<JsonConfigs>(Encoding.ASCII.GetString(receivedBytes));  
             }
             catch(Exception e)
             {
@@ -108,7 +107,7 @@ namespace TheP0ngServer.ProtocolManagers
             {
                 _logger.LogInformation($"Attempting to register client: {user.TeamCode} {user.GameCode}");
                
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(user), Encoding.UTF8, "application/json");
+                StringContent httpContent = new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json");
                 
                 int response = await RegisterPlayer(httpContent);
                 
@@ -125,7 +124,7 @@ namespace TheP0ngServer.ProtocolManagers
             {
                 _logger.LogInformation($"Client attempting to leave the game: {user.TeamCode} {user.GameCode}");
 
-                StringContent httpContent = new StringContent(JsonConvert.SerializeObject(user), Encoding.UTF8, "application/json");
+                StringContent httpContent = new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json");
 
                 int response = await UserLeaving(httpContent);
                 stream.Write(Encoding.ASCII.GetBytes(response.ToString()));

@@ -39,10 +39,8 @@ namespace TheP0ngServer.ProtocolManagers
                 while (true)
                 {
                     byte[] bytes = listener.Receive(ref groupEndPoint);
-                    logger.LogInformation($"Received {bytes[0]}");
                     int movement = Convert.ToInt32(bytes[0]);
                     var finalMsg = movement + " " + Configs.SchoolCode;
-                    //SendMessageToWebAPI(finalMsg, "127.0.0.1", GameServicePort);
                     await SendPacket(new Packet(Meta.Message, finalMsg), stream);
                 }
             }
