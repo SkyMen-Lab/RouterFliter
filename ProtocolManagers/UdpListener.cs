@@ -3,14 +3,14 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Serilog;
 using System.Threading.Tasks;
-using TheP0ngServer.Models;
+using RouterFilter.Models;
 
-namespace TheP0ngServer.ProtocolManagers
+namespace RouterFilter.ProtocolManagers
 {
     public class UdpListener
     {
-        private static LoggerService logger;
         private static int _udpPort;
         private static System.Timers.Timer _timer;
 
@@ -19,22 +19,19 @@ namespace TheP0ngServer.ProtocolManagers
 
         public static async void StartUdpListening(int port, string APIdomain, int GameServicePort)
         {
-
-
-            logger = new LoggerService();
             _udpPort = port;
             _apiDomain = APIdomain;
             _gameServicePort = GameServicePort;
 
             UdpClient listener = new UdpClient(_udpPort);
             IPEndPoint groupEndPoint = new IPEndPoint(IPAddress.Any, _udpPort);
-            logger.LogInformation($"Started UDP Listening on {_udpPort}");
+            Log.Information($"Started UDP Listening on {_udpPort}");
             try
             {
                 TcpClient client = new TcpClient();
                 client.Connect(_apiDomain, GameServicePort);
                 StreamWriter stream = new StreamWriter(client.GetStream());
-                logger.LogInformation("Connected TCP with webAPI");
+                Log.Information("Connected TCP with webAPI");
                 await SendPacket(new Packet(Meta.Connect, "router"), stream);
                 while (true)
                 {
@@ -46,7 +43,7 @@ namespace TheP0ngServer.ProtocolManagers
             }
             catch(Exception e)
             {
-                logger.LogError($"Exception: {e}");
+                Log.Error($"Exception: {e}");
             }
             finally
             {
@@ -64,7 +61,7 @@ namespace TheP0ngServer.ProtocolManagers
         private static void Restart()
         {
             _timer = new System.Timers.Timer();
-            logger.LogInformation("Restarting UDP server in 5 seconds");
+            Log.Information("Restarting UDP server in 5 seconds");
             _timer.Interval = 5000;
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = false;
@@ -82,7 +79,7 @@ namespace TheP0ngServer.ProtocolManagers
             {
                 TcpClient client = new TcpClient();
                 client.Connect(ip, port);
-                logger.LogInformation("Connected TCP with webAPI");
+                Log.Information("Connected TCP with webAPI");
                 var stream = client.GetStream();
                 byte[] bytes = Encoding.ASCII.GetBytes(message);
                 stream.Write(bytes, 0, bytes.Length);
@@ -92,7 +89,7 @@ namespace TheP0ngServer.ProtocolManagers
             }
             catch (SocketException e)
             {
-                logger.LogError($"SocketException: {e}"); 
+                Log.Error($"SocketException: {e}"); 
             }
 
         }

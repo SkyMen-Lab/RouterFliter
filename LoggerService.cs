@@ -5,12 +5,12 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace TheP0ngServer
+namespace RouterFilter
 {
-    public class LoggerService
+    public static class LoggerService
     {
         
-        public LoggerService()
+        static LoggerService()
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -19,18 +19,18 @@ namespace TheP0ngServer
                     rollOnFileSizeLimit: true)
                 .CreateLogger();
         }
-        public void LogInformation(string message)
+        public static void LogInformation(string message)
         {
             Log.Information(message);
         }
 
-        public void LogError(string message)
+        public static void LogError(string message)
         {
             Log.Error(message);
         }
 
 
-        public void CloseLogger()
+        public static void CloseLogger()
         {
             Log.CloseAndFlush();
         }
